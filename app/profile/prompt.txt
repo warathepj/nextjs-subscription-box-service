@@ -1,0 +1,202 @@
+next js 14 have app/profile/page.jsx with
+
+function Profile() {
+  const [interests, setInterests] = useState([]);
+  const handleInterestsUpdate = (newInterests) => {
+    setInterests((prevInterests) => [...prevInterests, ...newInterests]);
+    };
+
+  return (
+    <div>
+      <TestForm onSubmit={handleInterestsUpdate} />
+    </div>
+  );
+}
+
+and have app/components/TestForm.jsx
+
+function TestForm({ onSubmit }) { 
+    const handleSubmit = (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const interest = formData.get('interest'); // Get the interest value directly
+      if (interest) {
+        onSubmit([interest]); // Pass the interest as an array to match the expected format
+      }
+    };
+  
+  
+    return (
+      <form onSubmit={handleSubmit}>
+        {/* ... your form elements for interests ... */}
+        <label htmlFor="interest">Interest:</label>
+        <input 
+          type="text" id="interest" name="interest" />
+        <button type="submit">Submit</button>
+      </form>
+    );
+  }
+  
+  how to state interests by redux
+  
+//////////
+////////////////
+////////////////////
+
+  GPT
+
+  To manage the state of `interests` using 
+  Redux in your Next.js 14 project, you will 
+  need to set up Redux for state management. 
+  Here’s a step-by-step guide on how to integrate Redux 
+  into this example:
+
+### 1. Install Redux and Redux Toolkit
+
+First, you need to install the necessary packages:
+
+```bash
+npm install @reduxjs/toolkit react-redux
+```
+
+### 2. Set Up the Redux Store
+
+Create a `store.js` file in a directory like 
+`app/store.js` to configure the Redux store.
+
+```js
+// app/store.js
+import { configureStore } from '@reduxjs/toolkit';
+import interestsReducer from './features/interestsSlice';
+
+export const store = configureStore({
+  reducer: {
+    interests: interestsReducer,
+  },
+});
+
+export default store;
+```
+
+### 3. Create a Slice for Interests
+
+Next, create a slice for managing the 
+`interests` state. Create a file 
+`features/interestsSlice.js`.
+
+```js
+// app/features/interestsSlice.js
+import { createSlice } from '@reduxjs/toolkit';
+
+const interestsSlice = createSlice({
+  name: 'interests',
+  initialState: [],
+  reducers: {
+    addInterests: (state, action) => {
+      return [...state, ...action.payload];
+    },
+  },
+});
+
+export const { addInterests } = interestsSlice.actions;
+export default interestsSlice.reducer;
+```
+
+### 4. Provide Redux Store in the App
+
+Now, wrap your Next.js app with the Redux 
+`Provider` so that the store is available 
+throughout your application. 
+Update the `_app.js` file.
+
+```js
+// app/_app.jsx
+import { Provider } from 'react-redux';
+import { store } from './store';
+import '../styles/globals.css';
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <Provider store={store}>
+      <Component {...pageProps} />
+    </Provider>
+  );
+}
+
+export default MyApp;
+```
+
+### 5. Connect the `Profile` Component to Redux
+
+Now, you can connect the `Profile` component 
+to Redux using `useSelector` and `useDispatch` 
+hooks to manage the `interests` state.
+
+```js
+// app/profile/page.jsx
+import { useDispatch, useSelector } from 'react-redux';
+import { addInterests } from '../features/interestsSlice';
+import TestForm from '../components/TestForm';
+
+function Profile() {
+  const dispatch = useDispatch();
+  const interests = useSelector((state) => state.interests);
+
+  const handleInterestsUpdate = (newInterests) => {
+    dispatch(addInterests(newInterests)); // Dispatch the Redux action to update the state
+  };
+
+  return (
+    <div>
+      <h1>Your Interests:</h1>
+      <ul>
+        {interests.map((interest, index) => (
+          <li key={index}>{interest}</li>
+        ))}
+      </ul>
+      <TestForm onSubmit={handleInterestsUpdate} />
+    </div>
+  );
+}
+
+export default Profile;
+```
+
+### 6. The TestForm Component
+
+You don’t need to change anything in `TestForm`, 
+as it already works with the handler passed as props.
+
+```js
+// app/components/TestForm.jsx
+function TestForm({ onSubmit }) { 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const interest = formData.get('interest');
+    if (interest) {
+      onSubmit([interest]); // Submit the new interest
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label htmlFor="interest">Interest:</label>
+      <input type="text" id="interest" name="interest" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+export default TestForm;
+```
+
+### Summary
+
+- Installed `@reduxjs/toolkit` and `react-redux` for Redux state management.
+- Created a Redux store and a slice to handle the interests.
+- Wrapped the app with Redux `Provider`.
+- Used `useSelector` to access the `interests` state in the `Profile` component.
+- Used `useDispatch` to dispatch actions to update the `interests` state. 
+
+This setup lets you manage the state using Redux, allowing `interests` to be updated globally.
